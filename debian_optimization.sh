@@ -61,8 +61,8 @@ PERCENTAGE=50
 ALGO=zstd
 NUM_DEVICES=1
 EOF
-    systemctl enable zram-config
-    systemctl restart zram-config
+    systemctl enable zramswap
+    systemctl restart zramswap
     echo "ZRAM 配置完成。当前状态："
     zramctl
 }
