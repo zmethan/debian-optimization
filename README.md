@@ -7,7 +7,7 @@
 
 ## 下载脚本
 ```
-wget -O optimize.sh "https://github.com/zmethan/debian-optimization/raw/main/debian_optimization.sh" && chmod +x debian_optimization.sh && ./debian_optimization.sh
+wget -O debian_optimization.sh "https://github.com/zmethan/debian-optimization/raw/main/debian_optimization.sh" && chmod +x debian_optimization.sh && ./debian_optimization.sh
 ```
 
 ##功能说明
