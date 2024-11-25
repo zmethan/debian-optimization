@@ -3,7 +3,7 @@
 BACKUP_DIR="/root/system_backup"
 ZRAM_CONFIG="/etc/default/zram-config"
 FSTAB_FILE="/etc/fstab"
-SWAP_FILE="/swapfile"
+SWAP_FILE="/swap"
 
 # 检查是否以 root 用户运行
 if [[ $EUID -ne 0 ]]; then
@@ -40,15 +40,32 @@ restore_system() {
 configure_swap() {
     echo "配置 Swap..."
     SWAP_SIZE_MB=1024  # 修改 Swap 大小为 1GB
+    SWAP_FILE_CURRENT_SIZE=$(swapon --show=SIZE | grep "$SWAP_FILE" | awk '{print $2}')
+
+    # 检查是否已经启用了 Swap 文件
     if swapon --show | grep -q "$SWAP_FILE"; then
-        echo "Swap 已存在，跳过创建。"
+        if [ "$SWAP_FILE_CURRENT_SIZE" -eq "$SWAP_SIZE_MB" ]; then
+            echo "Swap 文件 ${SWAP_FILE} 已存在且大小为 ${SWAP_SIZE_MB}MB，跳过创建。"
+        else
+            echo "Swap 文件 ${SWAP_FILE} 存在，但大小为 ${SWAP_FILE_CURRENT_SIZE}MB，调整为 ${SWAP_SIZE_MB}MB..."
+            # 关闭现有的 Swap 文件
+            swapoff "$SWAP_FILE"
+            # 重新创建新的大小的 Swap 文件
+            fallocate -l "${SWAP_SIZE_MB}M" "$SWAP_FILE"
+            chmod 600 "$SWAP_FILE"
+            mkswap "$SWAP_FILE"
+            swapon "$SWAP_FILE"
+            echo "Swap 文件调整完成，新的大小：${SWAP_SIZE_MB}MB"
+        fi
     else
+        # 如果 Swap 文件不存在，创建新的 Swap 文件
+        echo "Swap 文件 ${SWAP_FILE} 不存在，创建新的 Swap 文件 ${SWAP_FILE}..."
         fallocate -l "${SWAP_SIZE_MB}M" "$SWAP_FILE"
         chmod 600 "$SWAP_FILE"
         mkswap "$SWAP_FILE"
         swapon "$SWAP_FILE"
         echo "$SWAP_FILE none swap sw 0 0" >> "$FSTAB_FILE"
-        echo "Swap 配置完成，大小：${SWAP_SIZE_MB}MB"
+        echo "新的 Swap 文件配置完成，大小：${SWAP_SIZE_MB}MB"
     fi
 }
 
